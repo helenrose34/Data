@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Visualization Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .chart-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .chart-container h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+
+        .controls {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .controls h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        input, textarea, select {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+        }
+
+        button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .info-message {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border-left: 4px solid #1976d2;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border-left: 4px solid #c62828;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            input, textarea, select, button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Data Visualization Dashboard</h1>
+            <p>Interactive charts and analytics with real-time data updates</p>
+        </div>
+
+        <div class="controls">
+            <h2>📥 Input Data</h2>
+            <div class="input-group">
+                <input type="text" id="chartLabel" placeholder="Enter chart title" value="My Chart">
+                <select id="chartType">
+                    <option value="line">Line Chart</option>
+                    <option value="bar">Bar Chart</option>
+                    <option value="doughnut">Doughnut Chart</option>
+                    <option value="radar">Radar Chart</option>
+                    <option value="polarArea">Polar Area</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="dataInput" style="display: block; margin-bottom: 10px; color: #333; font-weight: 600;">
+                    Paste your JSON data:
+                </label>
+                <textarea id="dataInput" placeholder='Example: {"labels": ["Jan", "Feb", "Mar"], "data": [10, 20, 30]}'>{"labels": ["Jan", "Feb", "Mar", "Apr", "May"], "data": [12, 19, 3, 5, 2]}</textarea>
+            </div>
+
+            <div class="input-group" style="margin-top: 15px;">
+                <button onclick="visualizeData()">🚀 Generate Visualization</button>
+                <button onclick="clearData()" style="background: #999;">🗑️ Clear</button>
+            </div>
+
+            <div id="message"></div>
+
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-label">Data Points</div>
+                    <div class="stat-value" id="dataPoints">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Max Value</div>
+                    <div class="stat-value" id="maxValue">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Min Value</div>
+                    <div class="stat-value" id="minValue">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Average</div>
+                    <div class="stat-value" id="avgValue">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard">
+            <div class="chart-container">
+                <h2 id="mainChartTitle">Primary Chart</h2>
+                <div class="chart-wrapper">
+                    <canvas id="mainChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h2>Data Summary</h2>
+                <div id="dataSummary" style="padding: 20px; color: #666; line-height: 1.8;">
+                    <p>No data loaded yet. Enter your data above and click "Generate Visualization"</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let mainChart = null;
+        let currentData = null;
+
+        // Color palettes for charts
+        const colorPalettes = {
+            primary: '#667eea',
+            secondary: '#764ba2',
+            success: '#2ecc71',
+            danger: '#e74c3c',
+            warning: '#f39c12',
+            info: '#3498db'
+        };
+
+        function visualizeData() {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = '';
+
+            try {
+                const dataInput = document.getElementById('dataInput').value;
+                const chartLabel = document.getElementById('chartLabel').value;
+                const chartType = document.getElementById('chartType').value;
+
+                // Parse JSON data
+                currentData = JSON.parse(dataInput);
+
+                if (!currentData.labels || !currentData.data) {
+                    throw new Error('Data must contain "labels" and "data" arrays');
+                }
+
+                // Update statistics
+                updateStats(currentData.data);
+
+                // Create chart
+                createChart(currentData, chartLabel, chartType);
+
+                // Update summary
+                updateSummary(currentData);
+
+                messageDiv.innerHTML = '<div class="success-message">✅ Visualization created successfully!</div>';
+            } catch (error) {
+                messageDiv.innerHTML = `<div class="error-message">❌ Error: ${error.message}</div>`;
+                console.error(error);
+            }
+        }
+
+        function createChart(data, label, type) {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+
+            if (mainChart) {
+                mainChart.destroy();
+            }
+
+            const colors = [
+                '#667eea', '#764ba2', '#f093fb', '#4facfe',
+                '#43e97b', '#fa709a', '#fee140', '#30cfd0'
+            ];
+
+            const chartConfig = {
+                type: type,
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: label,
+                            data: data.data,
+                            borderColor: colorPalettes.primary,
+                            backgroundColor: type === 'doughnut' || type === 'radar' || type === 'polarArea' 
+                                ? colors.slice(0, data.data.length)
+                                : 'rgba(102, 126, 234, 0.1)',
+                            borderWidth: 2,
+                            fill: type === 'line',
+                            tension: 0.4,
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            pointBackgroundColor: colorPalettes.primary
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                font: { size: 12 },
+                                padding: 15
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: label,
+                            font: { size: 16, weight: 'bold' }
+                        }
+                    },
+                    scales: type === 'doughnut' || type === 'radar' || type === 'polarArea' ? {} : {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0, 0, 0, 0.1)' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            };
+
+            mainChart = new Chart(ctx, chartConfig);
+            document.getElementById('mainChartTitle').textContent = label;
+        }
+
+        function updateStats(data) {
+            const max = Math.max(...data);
+            const min = Math.min(...data);
+            const avg = (data.reduce((a, b) => a + b, 0) / data.length).toFixed(2);
+
+            document.getElementById('dataPoints').textContent = data.length;
+            document.getElementById('maxValue').textContent = max;
+            document.getElementById('minValue').textContent = min;
+            document.getElementById('avgValue').textContent = avg;
+        }
+
+        function updateSummary(data) {
+            const summary = document.getElementById('dataSummary');
+            let html = '<h3 style="margin-bottom: 15px; color: #333;">📈 Data Breakdown</h3>';
+
+            data.labels.forEach((label, index) => {
+                const value = data.data[index];
+                const percentage = ((value / Math.max(...data.data)) * 100).toFixed(1);
+                html += `
+                    <div style="margin-bottom: 10px;">
+                        <strong>${label}:</strong> ${value}
+                        <div style="background: #eee; height: 20px; border-radius: 3px; overflow: hidden; margin-top: 5px;">
+                            <div style="background: linear-gradient(90deg, #667eea, #764ba2); height: 100%; width: ${percentage}%; display: flex; align-items: center; justify-content: flex-end; padding-right: 5px; color: white; font-size: 0.8em; font-weight: bold;">
+                                ${percentage}%
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            summary.innerHTML = html;
+        }
+
+        function clearData() {
+            document.getElementById('dataInput').value = '{"labels": [], "data": []}';
+            document.getElementById('chartLabel').value = 'My Chart';
+            document.getElementById('chartType').value = 'line';
+            document.getElementById('message').innerHTML = '';
+            document.getElementById('dataSummary').innerHTML = '<p>No data loaded. Enter your data and click "Generate Visualization"</p>';
+            
+            if (mainChart) {
+                mainChart.destroy();
+                mainChart = null;
+            }
+
+            document.getElementById('dataPoints').textContent = '0';
+            document.getElementById('maxValue').textContent = '0';
+            document.getElementById('minValue').textContent = '0';
+            document.getElementById('avgValue').textContent = '0';
+        }
+
+        // Load example data on page load
+        window.addEventListener('load', () => {
+            visualizeData();
+        });
+    </script>
+</body>
+</html>
